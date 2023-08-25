@@ -9,7 +9,9 @@
       "outFile": "./dist/index.d.ts",
       "failOnClass": false,
       "noCheck": false,
-      "libraries": {},
+      "libraries": {
+        "importedLibraries": ["@types/chance"]
+      },
       "output": {
         "inlineDeclareGlobals": false,
         "sortNodes": false,
