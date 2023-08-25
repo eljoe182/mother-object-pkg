@@ -1,7 +1,7 @@
 {
-  "name": "mother-object-pkg",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@eljoe182/mother-object-pkg",
+  "version": "1.0.1",
+  "description": "Package for testing",
   "keywords": [],
   "homepage": "https://github.com/eljoe182/mother-object-pkg#readme",
   "bugs": {
@@ -32,7 +32,8 @@
     "test:dev": "jest --verbose --colors --expand --maxWorkers=50% --detectOpenHandles --errorOnDeprecated --bail",
     "test:unit": "jest --passWithNoTests",
     "test:watch": "jest --watch --verbose --colors --expand --maxWorkers=25%",
-    "types": "dts-bundle-generator --config dts-generator.json"
+    "types": "dts-bundle-generator --config dts-generator.json",
+    "check-types": "tsc --noemit"
   },
   "dependencies": {
     "chance": "1.1.11",
