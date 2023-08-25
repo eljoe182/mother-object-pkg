@@ -2,4 +2,6 @@
 . "$(dirname "$0")/_/husky.sh"
 
 echo "Linting files 📝"
+npm run check-types
+npm run format
 npm run lint:fix
