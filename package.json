@@ -1,6 +1,6 @@
 {
   "name": "@eljoe182/mother-object-pkg",
-  "version": "1.0.2-4",
+  "version": "1.0.2-5",
   "description": "Package for testing",
   "keywords": [],
   "homepage": "https://github.com/eljoe182/mother-object-pkg#readme",
@@ -79,6 +79,6 @@
     "typescript": "5.1.6"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   }
 }
