@@ -1,0 +1,15 @@
+# .github/workflows/main.yml
+
+name: Main Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test-and-coverage:
+    uses: ./.github/workflows/test-and-coverage.yml
+
+  # npm-regestry:
+  #   uses: ./.github/workflows/npm-registry.yml
