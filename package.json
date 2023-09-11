@@ -1,6 +1,6 @@
 {
   "name": "@eljoe182/mother-object-pkg",
-  "version": "1.0.1",
+  "version": "1.0.2-3",
   "description": "Package for testing",
   "keywords": [],
   "homepage": "https://github.com/eljoe182/mother-object-pkg#readme",
@@ -21,6 +21,7 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "build:ci": "npm run build && npm run types",
+    "check-types": "tsc --noemit",
     "eslint": "eslint '*/**/*.{js,ts}' --fix --max-warnings=0 --no-error-on-unmatched-pattern",
     "format": "prettier 'src/**/*.[jt]s?(x)' --write",
     "lint": "eslint src --ext js,ts",
@@ -32,8 +33,7 @@
     "test:dev": "jest --verbose --colors --expand --maxWorkers=50% --detectOpenHandles --errorOnDeprecated --bail",
     "test:unit": "jest --passWithNoTests",
     "test:watch": "jest --watch --verbose --colors --expand --maxWorkers=25%",
-    "types": "dts-bundle-generator --config dts-generator.json",
-    "check-types": "tsc --noemit"
+    "types": "dts-bundle-generator --config dts-generator.json"
   },
   "dependencies": {
     "chance": "1.1.11",
@@ -82,6 +82,8 @@
     "node": ">=14"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/",
+    "tag": "latest"
   }
 }
