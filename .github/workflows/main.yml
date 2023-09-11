@@ -1,13 +1,22 @@
-# .github/workflows/main.yml
-
 name: Main Pipeline
 
 on:
   push:
-    branches:
-      - master
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+    types: [opened, synchronize]
 
 jobs:
+
+  avoid-reduncy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Builds
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
   test-and-coverage:
     uses: ./.github/workflows/test-and-coverage.yml
 
