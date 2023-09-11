@@ -1,0 +1,36 @@
+name: Test and Coverage
+
+on:
+  pull_request: 
+    branches: [develop, master]
+    types: [opened, synchronize]
+  push:
+    branches:
+      - master
+
+jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.0.0
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests with Bun
+        run: bun test:unit
+
+      - name: Generate Code Coverage with Bun
+        run: bun run coverage
