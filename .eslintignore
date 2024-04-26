@@ -6,3 +6,5 @@ node_modules
 .husky
 .vscode
 resources
+coverage
+__tests__
