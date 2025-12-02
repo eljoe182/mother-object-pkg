@@ -1,6 +1,6 @@
 export class Rut {
   static create(): string {
-    return this.validate(Math.floor(Math.random() * 100_000_000) + 10_000_000);
+    return this.validate(Math.floor(Math.random() * 99_000_000) + 1_000_000);
   }
 
   private static calculateDv = (rut: number): string => {
