@@ -10,12 +10,12 @@
       "failOnClass": false,
       "noCheck": false,
       "libraries": {
-        "importedLibraries": ["@types/chance"]
+        "importedLibraries": ["chance"]
       },
       "output": {
         "inlineDeclareGlobals": false,
         "sortNodes": false,
-        "inlineDeclareExternals": false,
+        "inlineDeclareExternals": true,
         "noBanner": false,
         "respectPreserveConstEnum": false,
         "exportReferencedTypes": true
