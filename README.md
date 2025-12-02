@@ -1,38 +1,38 @@
 # mother-object-pkg
 
-Tool para generar datos de prueba usando el patrón **Mother Object** en TypeScript/JavaScript.
+Tool for generating test data using the **Mother Object** pattern in TypeScript/JavaScript.
 
-## ¿Qué es este paquete?
+## What is this package?
 
-`@eljoe182/mother-object-pkg` es una pequeña librería pensada para **testing**.  
-Su objetivo es facilitar la creación de datos de prueba legibles y reutilizables mediante el patrón **Mother Object**:
+`@eljoe182/mother-object-pkg` is a small library designed for **testing**.  
+Its goal is to facilitate the creation of readable and reusable test data through the **Mother Object** pattern:
 
-- **Mother Object**: un objeto (o módulo) cuyo único propósito es **construir valores de prueba** coherentes.
-- Separa la lógica de creación de datos del propio test.
-- Hace que los tests sean **más declarativos**, fáciles de leer y mantener.
+- **Mother Object**: an object (or module) whose sole purpose is to **build coherent test values**.
+- Separates data creation logic from the test itself.
+- Makes tests **more declarative**, easier to read and maintain.
 
-Este paquete envuelve la librería `chance` y expone varios *Mothers* para tipos primitivos y helpers comunes.
+This package wraps the `chance` library and exposes various *Mothers* for primitive types and common helpers.
 
-## Instalación
+## Installation
 
-Con **npm**:
+With **npm**:
 
 ```bash
 npm install @eljoe182/mother-object-pkg
 ```
 
-Con **bun**:
+With **bun**:
 
 ```bash
 bun add @eljoe182/mother-object-pkg
 ```
 
-## API principal
+## Main API
 
-Desde el entrypoint del paquete se exporta:
+The package entrypoint exports:
 
 - `Mother` (core)
-- Primitivos:
+- Primitives:
   - `StringMother`
   - `TextMother`
   - `BooleanMother`
@@ -50,21 +50,21 @@ Desde el entrypoint del paquete se exporta:
   - `formatRut`
   - `validateRut`
 
-> Nota: los nombres concretos pueden crecer con el tiempo, pero la idea es que todos los *Mothers* se exportan desde el índice principal.
+> Note: specific names may grow over time, but the idea is that all *Mothers* are exported from the main index.
 
-## Uso básico del patrón Mother Object
+## Basic usage of the Mother Object pattern
 
-Cada `XxxMother` expone, como mínimo, un método:
+Each `XxxMother` exposes, at minimum, a method:
 
-- `random(...)`: genera un valor aleatorio del tipo correspondiente.
+- `random(...)`: generates a random value of the corresponding type.
 
-Ejemplo genérico en TypeScript:
+Generic example in TypeScript:
 
 ```ts
 import { StringMother } from '@eljoe182/mother-object-pkg';
 
-describe('MiFeature', () => {
-  it('debería crear un usuario con nombre aleatorio', () => {
+describe('MyFeature', () => {
+  it('should create a user with a random name', () => {
     const name = StringMother.random();
 
     const user = { id: '1', name };
@@ -74,14 +74,14 @@ describe('MiFeature', () => {
 });
 ```
 
-## Ejemplos por tipo
+## Examples by type
 
-### Strings y texto
+### Strings and text
 
 ```ts
 import { StringMother, TextMother } from '@eljoe182/mother-object-pkg';
 
-// String corto configurable
+// Configurable short string
 const upperToken = StringMother.random({
   length: 12,
   casing: 'upper',
@@ -90,32 +90,32 @@ const upperToken = StringMother.random({
   symbols: false,
 });
 
-// Texto tipo párrafo/lorem ipsum
+// Paragraph/lorem ipsum type text
 const description = TextMother.random();
 ```
 
-### Números
+### Numbers
 
 ```ts
 import { IntegerMother, FloatMother } from '@eljoe182/mother-object-pkg';
 
-// Entero entre un rango
+// Integer within a range
 const age = IntegerMother.random({ min: 18, max: 99 });
 
-// Float para montos, porcentajes, etc.
+// Float for amounts, percentages, etc.
 const price = FloatMother.random({ min: 0, max: 9999, fixed: 2 });
 ```
 
-### Booleanos y fechas
+### Booleans and dates
 
 ```ts
 import { BooleanMother, DateMother } from '@eljoe182/mother-object-pkg';
 
 const isActive = BooleanMother.random();
-const createdAt = DateMother.random(); // Date aleatoria
+const createdAt = DateMother.random(); // Random Date
 ```
 
-### Emails, URLs y teléfonos
+### Emails, URLs and phones
 
 ```ts
 import { EmailMother, UrlMother, PhoneMother } from '@eljoe182/mother-object-pkg';
@@ -130,10 +130,10 @@ const phone = PhoneMother.random();
 ```ts
 import { JwtMother } from '@eljoe182/mother-object-pkg';
 
-// Token aleatorio (por ejemplo, para pruebas de auth middleware)
+// Random token (for example, for auth middleware tests)
 const token = JwtMother.random({
   payload: { sub: 'user-id-123', role: 'admin' },
-  secret: 'mi-super-secret',
+  secret: 'my-super-secret',
   options: { expiresIn: '1h' },
 });
 ```
@@ -143,12 +143,12 @@ const token = JwtMother.random({
 ```ts
 import { RutMother } from '@eljoe182/mother-object-pkg';
 
-const rut = RutMother.random(); // Devuelve un RUT válido en formato string
+const rut = RutMother.random(); // Returns a valid RUT in string format
 ```
 
-## Uso en tests (Jest)
+## Usage in tests (Jest)
 
-Ejemplo completo usando varios *Mothers*:
+Complete example using several *Mothers*:
 
 ```ts
 import {
@@ -159,7 +159,7 @@ import {
 } from '@eljoe182/mother-object-pkg';
 
 describe('User domain model', () => {
-  it('crea un usuario válido con datos aleatorios', () => {
+  it('creates a valid user with random data', () => {
     const user = {
       id: StringMother.random({ length: 10, alpha: true, numeric: true, symbols: false, casing: 'lower' }),
       name: StringMother.random(),
@@ -175,9 +175,9 @@ describe('User domain model', () => {
 });
 ```
 
-## Uso directo de `Mother`
+## Direct usage of `Mother`
 
-Si necesitas algo que aún no tenga un `XxxMother` específico, siempre puedes usar directamente `Mother.create()` para acceder a la instancia de `Chance`:
+If you need something that doesn't have a specific `XxxMother` yet, you can always use `Mother.create()` directly to access the `Chance` instance:
 
 ```ts
 import { Mother } from '@eljoe182/mother-object-pkg';
@@ -188,18 +188,18 @@ const randomCity = chance.city();
 const randomIban = chance.iban();
 ```
 
-Esto te permite extender tus propios *Mothers* en tu proyecto sin depender de que la librería los tenga todos.
+This allows you to extend your own *Mothers* in your project without depending on the library having them all.
 
-## Recomendaciones de uso
+## Usage recommendations
 
-- Usa `XxxMother.random()` en todos tus tests en lugar de valores “hardcodeados” cuando el valor no sea relevante para la lógica.
-- Crea *Mothers* específicos de tu dominio encima de estos primitivos si necesitas estructuras más ricas (por ejemplo, `UserMother`, `OrderMother`, etc.).
-- Evita acoplar tus tests a valores concretos; deja que los *Mothers* generen datos y valida solo lo realmente importante.
+- Use `XxxMother.random()` in all your tests instead of "hardcoded" values when the value is not relevant to the logic.
+- Create domain-specific *Mothers* on top of these primitives if you need richer structures (for example, `UserMother`, `OrderMother`, etc.).
+- Avoid coupling your tests to specific values; let the *Mothers* generate data and validate only what's really important.
 
-## Desarrollo y contribución
+## Development and contribution
 
-- El código fuente está en `src/` y se compila a `dist/`.
-- Para desarrollar localmente:
+- Source code is in `src/` and compiles to `dist/`.
+- To develop locally:
 
 ```bash
 npm install
@@ -208,4 +208,4 @@ npm run test:unit
 npm run build
 ```
 
-Pull Requests y mejoras a nuevos *Mothers* son bienvenidas.
+Pull Requests and improvements for new *Mothers* are welcome.
