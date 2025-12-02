@@ -11,6 +11,8 @@ jobs:
 
   avoid-reduncy:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Cancel Previous Builds
         uses: styfle/cancel-workflow-action@0.11.0
@@ -19,6 +21,8 @@ jobs:
 
   test-and-coverage:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -45,6 +49,8 @@ jobs:
   publish-to-npm:
     needs: test-and-coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -59,4 +65,202 @@ jobs:
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+  create-tag:
+    needs: publish-to-npm
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read package.json version
+        id: package-version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag version: $VERSION"
+
+      - name: Check if tag exists
+        id: check-tag
+        run: |
+          TAG="v${{ steps.package-version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag $TAG already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG does not exist, will create it"
+          fi
+
+      - name: Get previous tag
+        id: previous-tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREVIOUS_TAG"
+
+      - name: Generate release notes with semantic-release
+        id: semantic-release
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          # Create Node.js script to generate release notes using semantic-release
+          cat > generate-release-notes.js << 'EOF'
+          const { execSync } = require('child_process');
+          const fs = require('fs');
+          
+          async function generateReleaseNotes() {
+            try {
+              // Get the previous tag
+              let previousTag = process.env.PREVIOUS_TAG || '';
+              if (!previousTag) {
+                try {
+                  previousTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8' }).trim();
+                } catch (e) {
+                  previousTag = execSync('git rev-list --max-parents=0 HEAD', { encoding: 'utf-8' }).trim();
+                }
+              }
+              
+              // Get commits since the previous tag
+              const range = previousTag && previousTag.length > 0 ? `${previousTag}..HEAD` : 'HEAD';
+              const commitsOutput = execSync(`git log ${range} --pretty=format:"%H|%s|%b" --no-merges`, { encoding: 'utf-8' });
+              
+              const commits = commitsOutput
+                .trim()
+                .split('\n')
+                .filter(Boolean)
+                .map(line => {
+                  const parts = line.split('|');
+                  const hash = parts[0] || '';
+                  const subject = parts[1] || '';
+                  const body = parts.slice(2).join('|') || '';
+                  return {
+                    hash: hash.substring(0, 7),
+                    message: subject,
+                    body: body,
+                    commit: {
+                      long: hash,
+                      short: hash.substring(0, 7)
+                    }
+                  };
+                });
+              
+              if (commits.length === 0) {
+                throw new Error('No commits found');
+              }
+              
+              // Use semantic-release release notes generator
+              const releaseNotesGenerator = require('@semantic-release/release-notes-generator');
+              
+              const context = {
+                commits: commits,
+                logger: {
+                  log: () => {},
+                  error: console.error,
+                  warn: console.warn
+                }
+              };
+              
+              const nextRelease = {
+                version: process.env.VERSION,
+                gitTag: `v${process.env.VERSION}`,
+                gitHead: execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim()
+              };
+              
+              const releaseNotes = await releaseNotesGenerator({
+                ...context,
+                nextRelease,
+                options: {
+                  preset: 'conventionalcommits',
+                  presetConfig: {
+                    types: [
+                      { type: 'feat', section: '✨ Features' },
+                      { type: 'fix', section: '🐛 Bug Fixes' },
+                      { type: 'perf', section: '⚡ Performance Improvements' },
+                      { type: 'revert', section: '⏪ Reverts' },
+                      { type: 'docs', section: '📝 Documentation', hidden: false },
+                      { type: 'style', section: '💄 Styles', hidden: false },
+                      { type: 'chore', section: '🔧 Miscellaneous Chores', hidden: false },
+                      { type: 'refactor', section: '♻️ Code Refactoring', hidden: false },
+                      { type: 'test', section: '✅ Tests', hidden: false },
+                      { type: 'build', section: '👷 Build System', hidden: false },
+                      { type: 'ci', section: '👷 CI', hidden: false }
+                    ]
+                  }
+                }
+              }, context);
+              
+              fs.writeFileSync('release-notes.txt', releaseNotes || '');
+              console.log('Release notes generated successfully');
+            } catch (error) {
+              console.error('Error generating release notes:', error.message);
+              // Fallback: generate basic release notes from git log
+              try {
+                const previousTag = process.env.PREVIOUS_TAG || '';
+                const range = previousTag && previousTag.length > 0 ? `${previousTag}..HEAD` : 'HEAD';
+                const basicNotes = execSync(`git log ${range} --pretty=format:"- %s (%h)" --no-merges`, { encoding: 'utf-8' });
+                const fallbackNotes = `## What's Changed\n\n${basicNotes}`;
+                fs.writeFileSync('release-notes.txt', fallbackNotes);
+                console.log('Using fallback release notes');
+              } catch (fallbackError) {
+                const basicNotes = execSync('git log --pretty=format:"- %s (%h)" --no-merges -20', { encoding: 'utf-8' });
+                const fallbackNotes = `## What's Changed\n\n${basicNotes}`;
+                fs.writeFileSync('release-notes.txt', fallbackNotes);
+              }
+            }
+          }
+          
+          generateReleaseNotes();
+          EOF
+          
+          # Execute the script
+          VERSION="${{ steps.package-version.outputs.version }}" \
+          PREVIOUS_TAG="${{ steps.previous-tag.outputs.tag }}" \
+          node generate-release-notes.js
+          
+          # Display the generated release notes
+          echo "Release notes generated:"
+          cat release-notes.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      - name: Create and push tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          TAG="v${{ steps.package-version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release version ${{ steps.package-version.outputs.version }}"
+          git push origin "$TAG"
+          echo "Created and pushed tag: $TAG"
+
+      - name: Create GitHub Release
+        if: steps.check-tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.package-version.outputs.version }}
+          name: Release v${{ steps.package-version.outputs.version }}
+          body_path: release-notes.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
