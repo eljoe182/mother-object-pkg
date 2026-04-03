@@ -8,7 +8,6 @@
     "declaration": true,
     "esModuleInterop": true,
     "module": "CommonJS",
-    "moduleResolution": "node",
     "typeRoots": [
       "./node_modules/@types"
     ],
